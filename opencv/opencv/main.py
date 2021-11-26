@@ -6,14 +6,14 @@ from pathlib import Path
 
 class ImageModifier:
     def __init__(self):
-        self.cat_dir = self.get_file_path("cat.jpg")
+       # self.cat_dir = self.get_file_path("cat.jpg")
+       # self.image : np.ndarray = None
         return
 
     def get_file_path(self, file_name : str) -> str:
         pic_dir = str(Path(__file__).parent.resolve()) + str(Path("/pictures"))
         return pic_dir+str(Path(f"/{file_name}"))
 
-        return
 
     def run(self):
 
