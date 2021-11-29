@@ -1,4 +1,3 @@
-from typing import Any, List, Tuple
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,22 +5,13 @@ from pathlib import Path
 
 class ImageModifier:
     def __init__(self):
-<<<<<<< HEAD
-       # self.cat_dir = self.get_file_path("cat.jpg")
-       # self.image : np.ndarray = None
-=======
         self.gray_cat = self.get_file_path("gray_cat.jpg")
->>>>>>> c6e0566bbed54900e9e217f41cca091107647ac5
         return
 
     def get_file_path(self, file_name : str) -> str:
         pic_dir = str(Path(__file__).parent.resolve()) + str(Path("/pictures"))
         return pic_dir+str(Path(f"/{file_name}"))
 
-<<<<<<< HEAD
-
-    def run(self):
-=======
     def filter2D(self):
         image = cv2.imread(self.gray_cat)
         plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
@@ -41,7 +31,6 @@ class ImageModifier:
         image = cv2.imread(self.gray_cat)
         plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         plt.show()
->>>>>>> c6e0566bbed54900e9e217f41cca091107647ac5
 
         dst = cv2.blur(image, (4, 4))
         plt.imshow(cv2.cvtColor(dst, cv2.COLOR_BGR2RGB))
@@ -69,7 +58,6 @@ class ImageModifier:
         self.basic_blur()
         self.Gaussian_blur()
         return
-
 
 
 
