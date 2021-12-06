@@ -1,4 +1,4 @@
-from pandas import __version__
+from learn_pandas import __version__
 
 
 def test_version():
