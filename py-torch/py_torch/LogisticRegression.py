@@ -49,8 +49,10 @@ class LogisticRegression:
 
             # Cost 계산
             hypothesis = torch.sigmoid(x_train.matmul(W) + b)
-            cost = -(y_train * torch.log(hypothesis) +
-                     (1 - y_train) * torch.log(1 - hypothesis)).mean()
+            # -[y*logH(x) + (1-y)*log(1-H(x))]
+            losses = -(y_train * torch.log(hypothesis) +
+                       (1 - y_train) * torch.log(1 - hypothesis))
+            cost = losses.mean()
 
             # cost로 H(x) 개선
             optimizer.zero_grad()
@@ -115,8 +117,8 @@ class LogisticRegression:
 
     def run(self):
         torch.manual_seed(1)
-        self.__sigmoid_funtion()
-        self.__logistic_regression()
+        #self.__sigmoid_funtion()
+        #self.__logistic_regression()
         self.__nnModule_logistic_regression()
 
         return
