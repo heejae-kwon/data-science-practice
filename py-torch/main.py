@@ -2,6 +2,7 @@ import py_torch
 from py_torch.LinearRegression import LinearRegression
 from py_torch.LogisticRegression import LogisticRegression
 from py_torch.SoftmaxRegression import SoftmaxRegression
+from py_torch.Perceptron import Perceptron
 
 
 def main():
@@ -12,7 +13,10 @@ def main():
     # logistic_regression.run()
 
     softmax_regression = SoftmaxRegression()
-    softmax_regression.run()
+    # softmax_regression.run()
+
+    perceptron = Perceptron()
+    perceptron.run()
 
     return
 
