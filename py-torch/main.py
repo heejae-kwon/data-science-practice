@@ -4,6 +4,7 @@ from py_torch.LogisticRegression import LogisticRegression
 from py_torch.SoftmaxRegression import SoftmaxRegression
 from py_torch.Perceptron import Perceptron
 from py_torch.ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
+from py_torch.NLP import NLP
 
 
 def main():
@@ -17,10 +18,13 @@ def main():
     # softmax_regression.run()
 
     perceptron = Perceptron()
-    #perceptron.run()
+    # perceptron.run()
 
     convolutional_neural_network = ConvolutionalNeuralNetwork()
-    convolutional_neural_network.run()
+    # convolutional_neural_network.run()
+
+    nlp = NLP()
+    nlp.run()
 
     return
 
