@@ -3,12 +3,10 @@ from gensim.models import Word2Vec
 from nltk.tokenize import word_tokenize, sent_tokenize
 import re
 from lxml import etree
-import zipfile
 import urllib.request
 import nltk
-nltk.download('punkt')
-from gensim.models import KeyedVectors
 
+nltk.download('punkt')
 urllib.request.urlretrieve(
     "https://raw.githubusercontent.com/GaoleMeng/RNN-and-FFNN-textClassification/master/ted_en-20160408.xml", filename="ted_en-20160408.xml")
 

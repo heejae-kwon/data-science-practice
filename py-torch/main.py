@@ -5,9 +5,11 @@ from py_torch.SoftmaxRegression import SoftmaxRegression
 from py_torch.Perceptron import Perceptron
 from py_torch.ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
 from py_torch.NLP import NLP
+from py_torch.Embedding import Embedding
 
 
 def main():
+    '''
     linear_regression = LinearRegression()
     # linear_regression.run()
 
@@ -24,7 +26,10 @@ def main():
     # convolutional_neural_network.run()
 
     nlp = NLP()
-    nlp.run()
+    # nlp.run()
+    '''
+    embedding = Embedding()
+    embedding.run()
 
     return
 

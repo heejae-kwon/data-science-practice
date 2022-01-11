@@ -1,1 +1,5 @@
 **/__pycache__/**
+py-torch/eng_w2v_tensor.tsv
+py-torch/eng_w2v_metadata.tsv
+py-torch/eng_w2v
+py-torch/ted_en-20160408.xml
