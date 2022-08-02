@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "pytorch-kr-book"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+torch = "^1.12.0"
+torchvision = "^0.13.0"
+torchaudio = "^0.12.0"
+matplotlib = "^3.5.2"
+seaborn = "^0.11.2"
+scikit-learn = "^1.1.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+autopep8 = "^1.6.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
