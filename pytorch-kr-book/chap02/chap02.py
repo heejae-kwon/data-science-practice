@@ -1,4 +1,5 @@
 from functools import cache
+from operator import mod
 import torch
 import torch.nn as nn
 import numpy as np
@@ -8,6 +9,7 @@ import matplotlib as mpl
 import seaborn as sns
 
 from pathlib import Path
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
 
 class Model(nn.Module):
@@ -94,5 +96,49 @@ def run():
     print(len(train_outputs))
     print(len(categorical_test_data))
     print(len(test_outputs))
+
+    model = Model(categorical_embedding_sizes, 4, [200, 100, 50], p=0.4)
+    print(model)
+
+    loss_function = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+    device = torch.device('cpu')
+    if torch.cuda.is_available():
+        device = torch.device('cuda')
+
+    epochs = 500
+    aggregated_losses = []
+    train_outputs = train_outputs.to(device=device, dtype=torch.int64)
+    for i in range(epochs):
+        i += 1
+        y_pred = model(categorical_train_data)
+        single_loss = loss_function(y_pred, train_outputs)
+        aggregated_losses.append(single_loss)
+
+        if i % 25 == 1:
+            print(f'epoch: {i:3} loss: {single_loss.item():10.8f}')
+
+        optimizer.zero_grad()
+        single_loss.backward()
+        optimizer.step()
+
+    print(f'epoch: {i:3} loss: {single_loss.item():10.10f}')
+
+    test_outputs = test_outputs.to(device=device, dtype=torch.int64)
+    with torch.no_grad():
+        y_val = model(categorical_test_data)
+        loss = loss_function(y_val, test_outputs)
+
+    print(f'Loss: {loss:0.8f}')
+
+    print(y_val[:5])
+
+    y_val = np.argmax(y_val, axis=1)
+    print(y_val[:5])
+
+    print(confusion_matrix(test_outputs, y_val))
+    print(classification_report(test_outputs, y_val))
+    print(accuracy_score(test_outputs, y_val))
 
     return
