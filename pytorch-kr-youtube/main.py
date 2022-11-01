@@ -1,4 +1,6 @@
 import numpy as np
+from torchvision import datasets, transforms
+import torch
 
 
 def simple_logistic_regression():
@@ -113,9 +115,103 @@ def numerical_derivative(f, x: np.ndarray):
     return grad
 
 
+class LogicGate:
+    def __init__(self, gate_name, xdata, tdata) -> None:
+        self.name = gate_name
+
+        self._xdata = np.array(xdata).reshape(4, 2)
+        self._tdata = np.array(tdata).reshape(4, 1)
+
+        self._W2 = np.random.rand(2, 6)
+        self._b2 = np.random.rand(6)
+
+        self._W3 = np.random.rand(6, 1)
+        self._b3 = np.random.rand(1)
+
+        self._learning_rate = 1e-2
+
+        print(self.name + " object is created")
+
+    def _sigmoid(self, x):
+        return 1 / (1+np.exp(-x))
+
+    def feed_forward(self):
+        delta = 1e-7
+
+        z2 = np.dot(self._xdata, self._W2) + self._b2
+        a2 = self._sigmoid(z2)
+
+        z3 = np.dot(a2, self._w3) + self._b3
+        y = a3 = self._sigmoid(z3)
+
+        # cross_entropy
+        return -np.sum(self._tdata + np.log(y+delta) + (1-self._tdata) + np.log((1-y)+delta))
+
+    def loss_val(self):
+        delta = 1e-7
+
+        z2 = np.dot(self._xdata, self._W2) + self._b2
+        a2 = self._sigmoid(z2)
+
+        z3 = np.dot(a2, self._w3) + self._b3
+        y = a3 = self._sigmoid(z3)
+
+        # cross_entropy
+        return -np.sum(self._tdata + np.log(y+delta) + (1-self._tdata) + np.log((1-y)+delta))
+
+    def train(self):
+        def f(x): return self.feed_forward()
+        print("Initial loss value = ", self.loss_val())
+
+        for step in range(10001):
+            self._W2 -= self._learning_rate * numerical_derivative(f, self._W2)
+            self._b2 -= self._learning_rate * numerical_derivative(f, self._b2)
+            self._W3 -= self._learning_rate * numerical_derivative(f, self._W3)
+            self._b3 -= self._learning_rate * numerical_derivative(f, self._b3)
+
+            if (step % 400 == 0):
+                print(f"step = {step}, loss value = {self.loss_val()}")
+
+    def predict(self, xdata):
+        z2 = np.dot(xdata, self._W2) + self._b2
+        a2 = self._sigmoid(z2)
+
+        z3 = np.dot(a2, self._W3) + self._b3
+        y = a3 = self._sigmoid(z3)
+
+        result = 1 if y > 0.5 else 0
+
+        return y, result
+
+
+def run_mnist():
+
+    train_data: torch.Tensor = (datasets.MNIST(root='./data',
+                                               train=True,
+                                               download=True,
+                                               transform=transforms.ToTensor()))
+    test_data: torch.Tensor = (datasets.MNIST(root='./data',
+                                              train=False,
+                                              download=True,
+                                              transform=transforms.ToTensor()))
+
+    print(
+        f"trainig_data.shape = {train_data.shape}, test_data.shape = {test_data.shape}")
+
+    return
+
+
+class NeuralNetwork:
+    def __init__(self, input_nodes, hidden_nodes, output_nodes) -> None:
+        self.input_nodes = input_nodes
+        self.hidden_nodes = hidden_nodes
+        self.output_nodes = output_nodes
+
+
 def main():
     # simple_regression()
-    simple_logistic_regression()
+    # simple_logistic_regression()
+    run_mnist()
     return
 
 
