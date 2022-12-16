@@ -1,6 +1,5 @@
+from datetime import datetime
 import numpy as np
-from torchvision import datasets, transforms
-import torch
 
 
 def sigmoid(x):
@@ -186,59 +185,79 @@ class LogicGate:
 
 
 class NeuralNetwork:
-    def __init__(self, input_nodes, hidden_nodes, output_nodes) -> None:
-        self.target_data = np.zeros()
-        self.input_data = np.zeros()
+    def __init__(self, input_nodes, hidden_nodes, output_nodes, learning_rate) -> None:
+        #self.target_data = np.zeros()
+        #self.input_data = np.zeros()
 
         self.input_nodes = input_nodes
         self.hidden_nodes = hidden_nodes
         self.output_nodes = output_nodes
 
-        self.W2 = np.random.rand(self.input_nodes, self.hidden_nodes)
+        self.W2 = np.random.randn(
+            self.input_nodes, self.hidden_nodes) / np.sqrt(self.input_nodes/2)
         self.b2 = np.random.rand(self.hidden_nodes)
 
-        self.W3 = np.random.rand(self.hidden_nodes, self.output_nodes)
+        self.W3 = np.random.randn(
+            self.hidden_nodes, self.output_nodes)/np.sqrt(self.hidden_nodes/2)
         self.b3 = np.random.rand(self.output_nodes)
 
-        self.learning_rate = 1e-4
+        self.Z3 = np.zeros([1, output_nodes])
+        self.A3 = np.zeros([1, output_nodes])
+
+        self.Z2 = np.zeros([1, hidden_nodes])
+        self.A2 = np.zeros([1, hidden_nodes])
+
+        self.Z1 = np.zeros([1, input_nodes])
+        self.A1 = np.zeros([1, input_nodes])
+
+        self.learning_rate = learning_rate
+
+        self.target_data = np.zeros()
 
     def feed_forward(self):
         delta = 1e-7
 
-        z1 = np.dot(self.input_data, self.W2) + self.b2
-        y1 = sigmoid(z1)
+        self.Z1 = self.input_data
+        self.A1 = self.input_data
 
-        z2 = np.dot(y1, self.W3) + self.b3
-        y = sigmoid(z2)
+        self.Z2 = np.dot(self.A1, self.W2) + self.b2
+        self.A2 = sigmoid(self.Z2)
+
+        self.Z3 = np.dot(self.A2, self.W3) + self.b3
+        self.A3 = sigmoid(self.Z3)
 
         # cross_entropy
-        return -np.sum(self.target_data + np.log(y+delta) + (1-self.target_data) + np.log((1-y)+delta))
+        return -np.sum(self.target_data * np.log(self.A3+delta) + (1-self.target_data) * np.log((1-self.A3)+delta))
 
     def loss_val(self):
         return self.feed_forward()
 
-    def train(self, training_data):
-        self.target_data = np.zeros(self.output_nodes) + 0.01
-        self.target_data[int(training_data[0])] = 0.99
-        self.input_data = (training_data[1:]/255.0*0.99)+0.01
+    def train(self, input_data, target_data):
+        self.target_data = target_data
+        self.input_data = input_data
 
-        def f(x): return self.feed_forward()
-        print("Initial loss value = ", self.loss_val())
+        loss_val = self.feed_forward()
 
-        for step in range(10001):
-            self.W2 -= self.learning_rate * numerical_derivative(f, self.W2)
-            self.b2 -= self.learning_rate * numerical_derivative(f, self.b2)
-            self.W3 -= self.learning_rate * numerical_derivative(f, self.W3)
-            self.b3 -= self.learning_rate * numerical_derivative(f, self.b3)
+        loss_3 = (self.A3-self.target_data) * self.A3 * (1-self.A3)
+
+        self.W3 = self.W3 - self.learning_rate * np.dot(self.A2.T, loss_3)
+        self.b3 = self.b3 - self.learning_rate * loss_3
+
+        loss_2 = np.dot(loss_3, self.W3.T) * self.A2 * (1-self.A2)
+
+        self.W2 = self.W2 - self.learning_rate * np.dot(self.A1.T, loss_2)
+        self.b2 = self.b2 - self.learning_rate*loss_2
 
     def predict(self, input_data):
-        z1 = np.dot(input_data, self.W2) + self.b2
-        y1 = sigmoid(z1)
+        Z2 = np.dot(input_data, self.W2) + self.b2
+        A2 = sigmoid(Z2)
 
-        z2 = np.dot(y1, self.W3) + self.b3
-        y = sigmoid(z2)
+        Z3 = np.dot(A2, self.W3) + self.b3
+        A3 = sigmoid(Z3)
 
-        return np.argmax(y)
+        predicted_num = np.argmax(A3)
+
+        return predicted_num
 
     def accuracy(self, test_data):
         matched_list = []
@@ -249,14 +268,15 @@ class NeuralNetwork:
 
             # normalize
             data = (test_data[index, 1:]/255.0*0.99) + 0.01
-            predicted_num = self.predict(data)
+            predicted_num = self.predict(np.array(data, ndmin=2))
 
             if label == predicted_num:
                 matched_list.append(index)
             else:
                 not_matched_list.append(index)
 
-        print(f"Current Accuracy = {100*(len(matched_list)/(len(test_data))) %}")
+        print(
+            f"Current Accuracy = {100*(len(matched_list)/(len(test_data))) }%")
 
         return matched_list, not_matched_list
 
@@ -274,14 +294,28 @@ def run_mnist():
     input_nodes = 784
     hidden_nodes = 100
     output_nodes = 10
+    learning_rate = 0.3
+    epochs = 1
 
     nn = NeuralNetwork(input_nodes, hidden_nodes, output_nodes)
 
-    for step in range(30001):
-        index = np.random.randint(0, len(traning_data)-1)
-        nn.train(traning_data[index])
-        if step % 400 == 0:
-            print(f"step = {step}, loss_val = {nn.loss_val()}")
+    start_time = datetime.now()
+    for i in range(epochs):
+        for step in range(len(traning_data)):
+
+            target_data = np.zeros(output_nodes)+0.01
+            target_data[int(traning_data[step, 0])] = 0.99
+
+            input_data = ((traning_data[step, 1:]/255.0)*0.99) + 0.01
+
+            nn.train(np.array(input_data, ndmin=2),
+                     np.array(target_data, ndmin=2))
+
+            if step % 400 == 0:
+                print(f"step = {step}, loss_val = {nn.loss_val()}")
+
+    end_time = datetime.now()
+    print(f'elapsed time = {end_time-start_time}')
 
     nn.accuracy(test_data)
 

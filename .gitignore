@@ -2,3 +2,6 @@
 **/__init__.py
 pytorch-kr-book/chap05/data/catanddog/
 pytorch-kr-book/chap05/data/FashionMNIST/
+pytorch-kr-youtube/main.py
+pytorch-kr-youtube/data/MNIST/mnist_train.csv
+pytorch-kr-youtube/data/MNIST/mnist_test.csv
