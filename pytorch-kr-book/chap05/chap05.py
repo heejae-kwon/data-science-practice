@@ -275,6 +275,23 @@ def set_parameter_requires_grad(model: nn.Module,
             param.requires_grad = False
 
 
+def eval_model(model: nn.Module, dataloaders: DataLoader,
+               optimizer: torch.optim.Optimizer, device: torch.device):
+
+    since = time.time()
+    acc_history = []
+    best_acc = 0.0
+    saved_path = str(Path(str(Path.cwd())+'/chap05/data/catanddog'))
+    saved_models = glob.glob(saved_path+'*.pth')
+    saved_models.sort()
+    print('saved_model', saved_models)
+
+    for model_path in saved_models:
+        print('Loading model', model_path)
+
+    return
+
+
 def run_transfer_learning():
     data_path = str(Path(str(Path.cwd())+'/chap05/data/catanddog/train'))
     transform = transforms.Compose([
@@ -291,7 +308,7 @@ def run_transfer_learning():
                               shuffle=True)
     print(len(train_dataset))
 
-    samples, labels = iter(train_loader).next()
+    samples, labels = next(iter(train_loader))
     classes = {0: 'cat', 1: 'dog'}
     fig = plt.figure(figsize=(16, 24))
     for i in range(24):
@@ -333,6 +350,20 @@ def run_transfer_learning():
     criterion = nn.CrossEntropyLoss()
     train_acc_hist, train_loss_hist = train_model(model=resnet18, dataloaders=train_loader,
                                                   criterion=criterion, optimizer=optimizer, device=device)
+
+    test_path = str(Path(str(Path.cwd())+'/chap05/data/catanddog/test'))
+    transform = transforms.Compose([
+        transforms.Resize(224),
+        transforms.CenterCrop(224),
+        transforms.ToTensor()
+    ])
+    test_dataset = torchvision.datasets.ImageFolder(
+        root=test_path,
+        transform=transform
+    )
+    test_loader = DataLoader(test_dataset, batch_size=32, num_workers=4,
+                             shuffle=True)
+    print(len(test_dataset))
 
     return
 
