@@ -276,20 +276,56 @@ def set_parameter_requires_grad(model: nn.Module,
 
 
 def eval_model(model: nn.Module, dataloaders: DataLoader,
-               optimizer: torch.optim.Optimizer, device: torch.device):
+               device: torch.device):
 
     since = time.time()
     acc_history = []
     best_acc = 0.0
-    saved_path = str(Path(str(Path.cwd())+'/chap05/data/catanddog'))
-    saved_models = glob.glob(saved_path+'*.pth')
+    saved_path = str(Path(str(Path.cwd())+'/chap05/data/catanddog/*.pth'))
+    saved_models = glob.glob(saved_path)
     saved_models.sort()
     print('saved_model', saved_models)
 
     for model_path in saved_models:
         print('Loading model', model_path)
+        model.load_state_dict(torch.load(model_path))
+        model.eval()
+        model.to(device=device)
+        running_corrects = 0
 
-    return
+        for inputs, labels in dataloaders:
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+
+            with torch.no_grad():
+                outputs = model(inputs)
+
+            _, preds = torch.max(outputs.data, 1)
+            preds[preds >= 0.5] = 1
+            preds[preds < 0.5] = 0
+            running_corrects += preds.eq(labels).int().sum()
+
+        epoch_acc = running_corrects.double() / len(dataloaders.dataset)
+        print(f'Acc: {epoch_acc}')
+
+        if epoch_acc > best_acc:
+            best_acc = epoch_acc
+            acc_history.append(epoch_acc.item())
+            print()
+
+    time_elapsed = time.time() - since
+    print(f'Validation complete in {time_elapsed//60}m {time_elapsed%60}s')
+    print(f'Best Acc: {best_acc}')
+
+    return acc_history
+
+
+def im_convert(tensor: torch.Tensor):
+    image: np.ndarray = tensor.clone().detach().numpy()
+    image = image.transpose(1, 2, 0)
+    image = image*(np.array((0.5, 0.5, 0.5)) + np.array((0.5, 0.5, 0.5)))
+    image = image.clip(0, 1)
+    return image
 
 
 def run_transfer_learning():
@@ -365,6 +401,31 @@ def run_transfer_learning():
                              shuffle=True)
     print(len(test_dataset))
 
+    val_acc_hist = eval_model(resnet18, test_loader, device=device)
+    plt.plot(train_acc_hist)
+    plt.plot(val_acc_hist)
+    plt.show()
+
+    plt.plot(train_loss_hist)
+    plt.show()
+
+    dataiter = iter(test_loader)
+    images, labels = next(dataiter)
+    output = model(images)
+    _, preds = torch.max(output, 1)
+
+    fig = plt.figure(figsize=(25, 4))
+    for idx in np.arange(20):
+        ax = fig.add_subplot(2, 10, idx+1, xticks=[], yticks=[])
+        plt.imshow(im_convert(images[idx]))
+        a.set_title(classes[labels[i].item()])
+
+    ax.set_title(
+        f'{str(classes[preds[idx].item()])} ({str(classes[labels[i].item()])})',
+        color=("green" if preds[idx] == labels[idx] else "red"))
+
+    plt.show()
+    plt.subplots_adjust(bottom=0.2, top=0.6, hspace=0)
     return
 
 
