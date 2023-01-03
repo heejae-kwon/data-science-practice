@@ -1,24 +1,20 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
-import torchvision
 import torch
+import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision
 import torchvision.transforms as transforms
 import torchvision.models as models
-import torch.optim as optim
 
-import os
 import time
-import copy
 import glob
+import numpy as np
+import matplotlib.pyplot as plt
 import cv2
-import shutil
 
 from torch.autograd import Variable
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
+from torchvision.transforms import ToTensor
 from pathlib import Path
 from matplotlib.figure import Figure
 
@@ -429,8 +425,157 @@ def run_transfer_learning():
     return
 
 
+class XAI(torch.nn.Module):
+    def __init__(self, num_classes=2) -> None:
+        super(XAI, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=3, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.3),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(64, 128, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.4),
+            nn.Conv2d(128, 128, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(128, 256, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.4),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.4),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(256, 512, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.4),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.4),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.4),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.4),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+
+        self.classifier = nn.Sequential(
+            nn.Linear(512, 512, bias=False),
+            nn.Dropout(0.5),
+            nn.BatchNorm1d(512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            nn.Linear(512, num_classes)
+        )
+        return
+
+    def forward(self, x: torch.Tensor):
+        x = self.features(x)
+        x = x.view(-1, 512)
+        x = self.classifier(x)
+        return F.log_softmax(input=x)
+
+
+class LayerActivations:
+    def __init__(self, model,
+                 layer_num: int) -> None:
+        self.features = []
+        self.hook = model[layer_num].register_forward_hook(
+            self.hook_fn
+        )
+
+    def hook_fn(self, module, input,
+                output: torch.Tensor):
+        self.features = output.cpu().detach().numpy()
+
+    def remove(self):
+        self.hook.remove()
+
+
+def run_explainable_cnn():
+    device = torch.device("cuda" if
+                          torch.cuda.is_available() else
+                          'cpu')
+    model = XAI()
+    model.to(device=device)
+    model.eval()
+
+    img_path = str(Path(str(Path.cwd()) +
+                        '/chap05/data/cat.jpg'))
+    img = cv2.imread(img_path)
+    plt.imshow(img)
+    plt.show()
+    img = cv2.resize(img, (100, 100),
+                     interpolation=cv2.INTER_LINEAR)
+    img = ToTensor()(img).unsqueeze(0)
+    img = img.to(device=device)
+
+    result = LayerActivations(model.features, 0)
+    model(img)
+    activations = result.features
+    fig, axes = plt.subplots(4, 4)
+    fig = plt.figure(figsize=(12, 8))
+    fig.subplots_adjust(left=0, right=1, bottom=0,
+                        top=1, hspace=0.05, wspace=0.05)
+    for row in range(4):
+        for column in range(4):
+            axis = axes[row][column]
+            axis.get_xaxis().set_ticks([])
+            axis.get_yaxis().set_ticks([])
+            axis.imshow(activations[0][row*10+column])
+
+    plt.show()
+
+    result = LayerActivations(model.features, 40)
+    model(img)
+    activations = result.features
+    fig, axes = plt.subplots(4, 4)
+    fig = plt.figure(figsize=(12, 8))
+    fig.subplots_adjust(left=0, right=1, bottom=0,
+                        top=1, hspace=0.05, wspace=0.05)
+    for row in range(4):
+        for column in range(4):
+            axis = axes[row][column]
+            axis.get_xaxis().set_ticks([])
+            axis.get_yaxis().set_ticks([])
+            axis.imshow(activations[0][row*10+column])
+
+    plt.show()
+
+    return
+
+
 def run():
     # run_basic_cnn()
-    run_transfer_learning()
+    # run_transfer_learning()
+    run_explainable_cnn()
 
     return

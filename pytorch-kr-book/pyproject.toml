@@ -14,6 +14,7 @@ torchaudio = {url = "https://download.pytorch.org/whl/cu117/torchaudio-0.13.1%2B
 torchvision = {url = "https://download.pytorch.org/whl/cu117/torchvision-0.14.1%2Bcu117-cp39-cp39-win_amd64.whl"}
 opencv-python = "^4.6.0.66"
 pyqt5 = "^5.15.7"
+pillow = "^9.3.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
