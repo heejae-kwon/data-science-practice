@@ -576,6 +576,6 @@ def run_explainable_cnn():
 def run():
     # run_basic_cnn()
     # run_transfer_learning()
-    run_explainable_cnn()
+    # run_explainable_cnn()
 
     return
