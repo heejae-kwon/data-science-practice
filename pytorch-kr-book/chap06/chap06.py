@@ -17,11 +17,11 @@ from matplotlib import pyplot as plt
 
 
 class ImageTransform():
-    def __init__(self, resize, mean, std) -> None:
+    def __init__(self, size, mean, std) -> None:
         self.data_transform = {
             'train': transforms.Compose([
                 transforms.RandomResizedCrop(
-                    resize,
+                    size,
                     scale=(0.5, 1.0)
                 ),
                 transforms.RandomHorizontalFlip(),
@@ -30,7 +30,7 @@ class ImageTransform():
             ]),
             'val': transforms.Compose([
                 transforms.Resize(256),
-                transforms.CenterCrop(),
+                transforms.CenterCrop(size),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std)
             ])
@@ -43,8 +43,9 @@ class ImageTransform():
 def display_image_grid(images_filepaths: list[str],
                        predicted_labels=(), cols=5):
     rows = len(images_filepaths)
+    print(f'{rows} : rows')
     figure, ax = plt.subplots(
-        nrows=rows, ncols=cols, figsize=(12, 6))
+        nrows=2, ncols=cols, figsize=(12, 6))
 
     for i, image_filepath in enumerate(images_filepaths):
         print(image_filepath)
@@ -64,6 +65,57 @@ def display_image_grid(images_filepaths: list[str],
     plt.show()
 
     return
+
+
+class DogvsCatDataset(Dataset):
+    def __init__(self, file_list, transform=None, phase='train'):
+        self.file_list: list[str] = file_list
+        self.transform = transform
+        self.phase = phase
+
+    def __len__(self):
+        return len(self.file_list)
+
+    def __getitem__(self, idx):
+        img_path = self.file_list[idx]
+        img = Image.open(img_path)
+        img_transformed = self.transform(img, self.phase)
+        label = img_path.split('\\')[-1].split('.')[0]
+        label = 1 if label == 'dog' else 0
+
+        return img_transformed, label
+
+
+class LeNet(nn.Module):
+    def __init__(self) -> None:
+        super(LeNet, self).__init__()
+        self.cnn1 = nn.Conv2d(in_channels=3, out_channels=16,
+                              kernel_size=5, stride=1, padding=0)
+        self.relu1 = nn.ReLU()
+        self.maxpool1 = nn.MaxPool2d(kernel_size=2)
+
+        self.cnn2 = nn.Conv2d(in_channels=16, out_channels=32,
+                              kernel_size=5, stride=1, padding=0)
+        self.relu2 = nn.ReLU()
+        self.maxpool2 = nn.MaxPool2d(kernel_size=2)
+
+        self.fc1 = nn.Linear(32*53*53, 512)
+        self.relu5 = nn.ReLU()
+        self.fc2 = nn.Linear(512, 2)
+        self.output = nn.Softmax(dim=1)
+
+    def forward(self, x):
+        out = self.cnn1(x)
+        out = self.relu1(out)
+        out = self.maxpool1(out)
+        out = self.cnn2(out)
+        out = self.relu2(out)
+        out: torch.Tensor = self.maxpool2(out)
+        out = out.view(out.size(0), -1)
+        out = self.fc1(out)
+        out = self.fc2(out)
+        out = self.output(out)
+        return out
 
 
 def run():
@@ -108,5 +160,39 @@ def run():
           len(test_images_filepaths))
 
     display_image_grid(test_images_filepaths)
+
+    size = 224
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
+    batch_size = 32
+
+    train_dataset = DogvsCatDataset(
+        train_images_filepaths,
+        transform=ImageTransform(size=size, mean=mean, std=std),
+        phase='train')
+
+    val_dataset = DogvsCatDataset(
+        val_images_filepaths,
+        transform=ImageTransform(size=size, mean=mean, std=std),
+        phase='val')
+
+    index = 0
+    print(train_dataset.__getitem__(index)[0].size())
+    print(train_dataset.__getitem__(index)[1])
+
+    train_dataloader = DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=True)
+
+    val_dataloader = DataLoader(
+        val_dataset, batch_size=batch_size, shuffle=False)
+
+    dataloader_dict = {'train': train_dataloader, 'val': val_dataloader}
+    batch_iterator = iter(train_dataloader)
+    inputs, label = next(batch_iterator)
+    print(inputs.size())
+    print(label)
+
+    model = LeNet()
+    print(model)
 
     return
