@@ -1,11 +1,13 @@
 from pathlib import Path
 import pathlib
+import time
 import torch
 import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
 import cv2
 import random
+import pandas as pd
 
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
@@ -14,6 +16,7 @@ from torch import optim
 from PIL import Image
 from tqdm import tqdm_notebook as tqdm
 from matplotlib import pyplot as plt
+from torchsummary import summary
 
 
 class ImageTransform():
@@ -118,10 +121,69 @@ class LeNet(nn.Module):
         return out
 
 
-def run():
+def count_parameters(model: nn.Module):
+    return sum(p.numel() for p in model.parameters()
+               if p.requires_grad)
+
+
+def train_model(model, dataloader_dict,
+                criterion, optimizer, num_epoch, device):
+    since = time.time()
+    best_acc = 0.0
+
+    for epoch in range(num_epoch):
+        print('Epoch {}/{}'.format(epoch + 1, num_epoch))
+        print('-'*20)
+
+        for phase in ['train', 'val']:
+            if phase == 'train':
+                model.train()
+            else:
+                model.eval()
+
+            epoch_loss = 0.0
+            epoch_corrects = 0
+
+            for inputs, labels in tqdm(dataloader_dict[phase]):
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+                optimizer.zero_grad()
+
+                with torch.set_grad_enabled(phase == 'train'):
+                    outputs = model(inputs)
+                    _, preds = torch.max(outputs, 1)
+                    loss = criterion(outputs, labels)
+
+                    if phase == 'train':
+                        loss.backward()
+                        optimizer.step()
+
+                    epoch_loss += loss.item() * inputs.size(0)
+                    epoch_corrects += torch.sum(preds == labels.data)
+
+            epoch_loss = epoch_loss / len(dataloader_dict[phase].dataset)
+            epoch_acc = epoch_corrects.double(
+            ) / len(dataloader_dict[phase].dataset)
+
+            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
+                phase, epoch_loss, epoch_acc))
+
+            if phase == 'val' and epoch_acc > best_acc:
+                best_acc = epoch_acc
+                best_model_wts = model.state_dict()
+
+    time_elapsed = time.time() - since
+    print('Training complete in {:.0f}m {:.0f}s'.format(
+        time_elapsed // 60, time_elapsed % 60))
+    print('Best val Acc: {:4f}'.format(best_acc))
+    return model
+
+
+def run_LeNet():
     device = torch.device(
         "cuda" if torch.cuda.is_available() else 'cpu'
     )
+    device = 'cpu'
     cat_directory = (str(Path.cwd()) +
                      '/chap06/data/dogs-vs-cats/Cat/')
     dog_directory = (str(Path.cwd()) +
@@ -186,13 +248,65 @@ def run():
     val_dataloader = DataLoader(
         val_dataset, batch_size=batch_size, shuffle=False)
 
-    dataloader_dict = {'train': train_dataloader, 'val': val_dataloader}
+    dataloader_dict = {'train': train_dataloader,
+                       'val': val_dataloader}
     batch_iterator = iter(train_dataloader)
     inputs, label = next(batch_iterator)
     print(inputs.size())
     print(label)
 
     model = LeNet()
+    model = model.to(device=device)
     print(model)
+    summary(model, input_size=(3, 224, 224), device=device)
+    print(
+        f'The model has {count_parameters(model=model):,} trainable parameters')
 
+    optimizer = optim.SGD(model.parameters(),
+                          lr=0.001, momentum=0.9)
+    criterion = nn.CrossEntropyLoss()
+    criterion = criterion.to(device=device)
+
+    num_epoch = 10
+    model: nn.Module = train_model(model=model,
+                                   dataloader_dict=dataloader_dict,
+                                   criterion=criterion, num_epoch=num_epoch,
+                                   optimizer=optimizer, device=device)
+
+    id_list = []
+    pred_list = []
+    _id = 0
+    with torch.no_grad():
+        for test_path in tqdm(test_images_filepaths):
+            img = Image.open(test_path)
+            _id = test_path.split('\\')[-1].split('.')[1]
+            transforms = ImageTransform(size, mean, std)
+            img = transforms(img, phase='val')
+            img = img.unsqueeze(0)
+            img = img.to(device)
+
+            model.eval()
+            outputs = model(img)
+            preds = F.softmax(outputs, dim=1)[:, 1].tolist()
+            id_list.append(_id)
+            pred_list.append(preds[0])
+
+    res = pd.DataFrame({
+        'id': id_list,
+        'label': pred_list
+    })
+
+    res.sort_values(by='id', inplace=True)
+    res.reset_index(drop=True, inplace=True)
+
+    res.to_csv(
+        str(Path.cwd()) +
+        '/chap06/data/LeNet', index=False
+    )
+
+    return
+
+
+def run():
+    run_LeNet()
     return
