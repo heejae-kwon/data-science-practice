@@ -308,5 +308,5 @@ def run_LeNet():
 
 
 def run():
-    run_LeNet()
+    # run_LeNet()
     return
