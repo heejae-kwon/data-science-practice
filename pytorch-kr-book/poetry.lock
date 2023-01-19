@@ -1138,6 +1138,26 @@ files = [
 dev = ["pre-commit", "tox"]
 
 [[package]]
+name = "portalocker"
+version = "2.7.0"
+description = "Wraps the portalocker recipe for easy usage"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "portalocker-2.7.0-py2.py3-none-any.whl", hash = "sha256:a07c5b4f3985c3cf4798369631fb7011adb498e2a46d8440efc75a8f29a0f983"},
+    {file = "portalocker-2.7.0.tar.gz", hash = "sha256:032e81d534a88ec1736d03f780ba073f047a06c478b06e2937486f334e955c51"},
+]
+
+[package.dependencies]
+pywin32 = {version = ">=226", markers = "platform_system == \"Windows\""}
+
+[package.extras]
+docs = ["sphinx (>=1.7.1)"]
+redis = ["redis"]
+tests = ["pytest (>=5.4.1)", "pytest-cov (>=2.8.1)", "pytest-mypy (>=0.8.0)", "pytest-timeout (>=2.1.0)", "redis", "sphinx (>=6.0.0)"]
+
+[[package]]
 name = "prompt-toolkit"
 version = "3.0.36"
 description = "Library for building powerful interactive command lines in Python"
@@ -1721,6 +1741,37 @@ type = "url"
 url = "https://download.pytorch.org/whl/cu117/torchaudio-0.13.1%2Bcu117-cp39-cp39-win_amd64.whl"
 
 [[package]]
+name = "torchdata"
+version = "0.5.1"
+description = "Composable data loading modules for PyTorch"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "torchdata-0.5.1-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:07617e1a85c2fb22775530360166c16eba3bb962eaa68cde9f4e63ff93a8b5dc"},
+    {file = "torchdata-0.5.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:63f6996499a78ce12f45be643891cbff9f2939032a3796870837eb07db5736ab"},
+    {file = "torchdata-0.5.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:88b8cf9bdd01ac7bb484074579f92a5f3a6a06c18881d5e521f92c5664ef7e23"},
+    {file = "torchdata-0.5.1-cp310-cp310-win_amd64.whl", hash = "sha256:3aad96adc68119cb5243d8088cf6a20b6f93ffedcc3feda3a9ea819aa7421da1"},
+    {file = "torchdata-0.5.1-cp37-cp37m-macosx_10_13_x86_64.whl", hash = "sha256:bc5d7ac4a938526d967c6f61968e97abe735e367cd501e81c01e5ba04d7f2af2"},
+    {file = "torchdata-0.5.1-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c885c6abe3adea808b26897b9d5e8747a10bd61796d85aad046018ed48c76f9a"},
+    {file = "torchdata-0.5.1-cp37-cp37m-win_amd64.whl", hash = "sha256:4615fc11ed3cbcb41f24aa96a3cd4a9c277907092aab850999c300e12156739d"},
+    {file = "torchdata-0.5.1-cp38-cp38-macosx_10_13_x86_64.whl", hash = "sha256:33e40af9eaf159c86595ab20a2e8b50825d7234adbb68d42978cd04f2536545b"},
+    {file = "torchdata-0.5.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:95c0d6fbe661e6d11d12f284a6d93510fcd9c24e2a5f47042655e0e197dee406"},
+    {file = "torchdata-0.5.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d85add0fa6b7f5519c2f137c97f897414f37cc11a1156a24e601083bff92b9d5"},
+    {file = "torchdata-0.5.1-cp38-cp38-win_amd64.whl", hash = "sha256:4a7f4eecb64a4f114ebc4bc3835eb2e691cc6bccd5403d4a89a22449de41c0ac"},
+    {file = "torchdata-0.5.1-cp39-cp39-macosx_10_13_x86_64.whl", hash = "sha256:31030206c70dd795c3806652728cf557a82dcc170f63ac9be9f05597ce5a0137"},
+    {file = "torchdata-0.5.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:686ee7acb2227366f10e61d11894cd01f5c1dfd905f95acf27c8d828fdb3f07a"},
+    {file = "torchdata-0.5.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:13c7e10cb3b1b2ee0d9e1a74304a6c4e97ff9b5ae8fcf1d4892e476943057a23"},
+    {file = "torchdata-0.5.1-cp39-cp39-win_amd64.whl", hash = "sha256:5f9d285e870e05e55bf7960b61f2ef362bdc2211486e2399d1beba0c636e7212"},
+]
+
+[package.dependencies]
+portalocker = ">=2.0.0"
+requests = "*"
+torch = "1.13.1"
+urllib3 = ">=1.25"
+
+[[package]]
 name = "torchsummary"
 version = "1.5.1"
 description = "Model summary in PyTorch similar to `model.summary()` in Keras"
@@ -1731,6 +1782,27 @@ files = [
     {file = "torchsummary-1.5.1-py3-none-any.whl", hash = "sha256:10f41d1743fb918f83293f13183f532ab1bb8f6639a1b89e5f8592ec1919a976"},
     {file = "torchsummary-1.5.1.tar.gz", hash = "sha256:981bf689e22e0cf7f95c746002f20a24ad26aa6b9d861134a14bc6ce92230590"},
 ]
+
+[[package]]
+name = "torchtext"
+version = "0.14.1"
+description = "Text utilities and datasets for PyTorch"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "torchtext-0.14.1-cp39-cp39-win_amd64.whl", hash = "sha256:82e5df4a7ad828d3f828b19f563993656ea1b31b4e828a22f1905b1f17faefdd"},
+]
+
+[package.dependencies]
+numpy = "*"
+requests = "*"
+torch = "1.13.1"
+tqdm = "*"
+
+[package.source]
+type = "url"
+url = "https://download.pytorch.org/whl/torchtext-0.14.1-cp39-cp39-win_amd64.whl"
 
 [[package]]
 name = "torchvision"
@@ -1871,4 +1943,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "830439a8f1cd7d752d0f3f843f6c8276ebfa2268728f96761a0878b914350e3b"
+content-hash = "639bd4a3e21c495e834f9f84fecb445121cdbff3bd8caa1202e1523fb816c550"
