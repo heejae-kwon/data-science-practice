@@ -20,6 +20,14 @@ def identity_funtion(x):
     return x
 
 
+def sofmax(a: np.ndarray):
+    c = np.max(a)
+    exp_a = np.exp(a-c)
+    sum_exp_a = np.sum(exp_a)
+    y = exp_a / sum_exp_a
+    return y
+
+
 def init_network():
     network = {}
     network['W1'] = np.array([[0.1, 0.3, 0.5], [0.2, 0.4, 0.6]])
@@ -30,6 +38,20 @@ def init_network():
     network['b3'] = np.array([0.1, 0.2])
 
     return network
+
+
+def forward(network: dict, x: np.ndarray):
+    W1, W2, W3 = network['W1'], network['W2'], network['W3']
+    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+
+    a1 = np.dot(x, W1) + b1
+    z1 = sigmoid(a1)
+    a2 = np.dot(z1, W2) + b2
+    z2 = sigmoid(a2)
+    a3 = np.dot(z2, W3) + b3
+    y = identity_funtion(a3)
+
+    return y
 
 
 x = np.arange(-5, 5, 0.1)
@@ -80,3 +102,9 @@ B3 = np.array([0.1, 0.2])
 
 A3 = np.dot(Z2, W3)+B3
 Y = identity_funtion(A3)
+
+
+network = init_network()
+x = np.array([1.0, 0.5])
+y = forward(network, x)
+print(y)
