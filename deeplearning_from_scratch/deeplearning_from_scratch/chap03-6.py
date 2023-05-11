@@ -1,10 +1,9 @@
-import sys, os
-sys.path.append(os.pardir)
-
-from pathlib import Path
+import sys
+import os
 import pickle
 import numpy as np
 
+from pathlib import Path
 from dataset.mnist import load_mnist
 from PIL import Image
 
@@ -26,7 +25,7 @@ def step_function(x: np.ndarray):
 
 
 def sigmoid(x: np.ndarray):
-    return 1 / (1+np.exp(-x))
+    return 1. / (1.+np.exp(-x))
 
 
 def relu(x: np.ndarray):
@@ -46,8 +45,8 @@ def sofmax(a: np.ndarray):
 
 
 def init_network():
-    print(Path('./mnist.pkl').absolute())
-    with open(Path('./mnist.pkl'), 'rb') as f:
+    path = Path('./deeplearning_from_scratch/sample_weight.pkl').absolute()
+    with open(path, 'rb') as f:
         network = pickle.load(f)
 
     return network
@@ -94,5 +93,17 @@ for i in range(len(x)):
     p = np.argmax(y)
     if p == t[i]:
         accuracy_cnt += 1
+
+print(f'Accuracy: {str(float(accuracy_cnt)/len(x))}')
+
+
+batch_size = 100
+accuracy_cnt = 0
+# 100 단위로 끊어서
+for i in range(0, len(x), batch_size):
+    x_batch = x[i:i+batch_size]
+    y_batch = predict(network, x_batch)
+    p = np.argmax(y_batch, axis=1)
+    accuracy_cnt += np.sum(p == t[i:i+batch_size])
 
 print(f'Accuracy: {str(float(accuracy_cnt)/len(x))}')

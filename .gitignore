@@ -7,3 +7,5 @@ pytorch-kr-youtube/data/MNIST/mnist_train.csv
 pytorch-kr-youtube/data/MNIST/mnist_test.csv
 pytorch-kr-book/chap06/data/catanddog/
 pytorch-kr-book/chap06/data/dogs-vs-cats/
+**.pkl
+**.gz
