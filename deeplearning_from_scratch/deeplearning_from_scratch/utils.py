@@ -17,7 +17,7 @@ def identity_funtion(x):
     return x
 
 
-def sofmax(a: np.ndarray):
+def softmax(a: np.ndarray):
     c = np.max(a)
     exp_a = np.exp(a-c)
     sum_exp_a = np.sum(exp_a)
@@ -29,6 +29,39 @@ def sum_squares_error(y: np.ndarray, t: np.ndarray):
     return 0.5 * np.sum((np.array(y)-np.array(t))**2)
 
 
-def cross_entropy_error(y, t):
-    delta = 1e-7
-    return -np.sum(np.array(t)*np.log(np.array(y)+delta))
+def cross_entropy_error(y: np.ndarray, t: np.ndarray):
+    if y.ndim == 1:
+        t = t.reshape(1, t.size)
+        y = y.reshape(1, y.size)
+
+    batch_size = y.shape[0]
+    return -np.sum(np.array(t)*np.log(np.array(y)+1e-7)) / batch_size
+
+
+def numerical_gradient(f, x):
+    h = 1e-4  # 0.0001
+    grad = np.zeros_like(x)  # x와 형상이 같은 zero 배열 생성
+
+    it = np.nditer(x, flags=['multi_index'], op_flags=['readwrite'])
+    while not it.finished:
+        idx = it.multi_index
+        tmp = x[idx]
+        x[idx] = tmp + h
+        fx1 = f(x)
+        x[idx] = tmp - h
+        fx2 = f(x)
+        grad[idx] = (fx1 - fx2) / (2 * h)
+        x[idx] = tmp
+        it.iternext()
+
+    return grad
+
+
+def gradient_descent(f, init_x, lr=0.01, step_num=100):
+    x = init_x
+
+    for i in range(step_num):
+        grad = numerical_gradient(f, x)
+        x -= lr*grad
+
+    return x

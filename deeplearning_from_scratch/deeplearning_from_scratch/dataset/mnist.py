@@ -106,7 +106,7 @@ def load_mnist(normalize=True, flatten=True, one_hot_label=False):
         init_mnist()
         
     with open(save_file, 'rb') as f:
-        dataset = pickle.load(f)
+        dataset: dict[str, np.ndarray] = pickle.load(f)
     
     if normalize:
         for key in ('train_img', 'test_img'):
