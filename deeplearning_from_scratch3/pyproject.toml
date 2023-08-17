@@ -8,6 +8,7 @@ packages = [{include = "deeplearning_from_scratch3"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+numpy = "^1.25.2"
 
 
 [build-system]
