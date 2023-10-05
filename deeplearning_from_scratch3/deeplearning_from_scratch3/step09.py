@@ -1,10 +1,20 @@
-
 from __future__ import annotations
 import numpy as np
 
 
+def as_array(x):
+    if np.isscalar(x):
+        return np.array(x)
+
+    return x
+
+
 class Variable:
     def __init__(self, data: np.ndarray):
+        if data is not None:
+            if not isinstance(data, np.ndarray):
+                raise TypeError(f"{type(data)}(은(는) 지원하지 않습니다.")
+
         self.data = data
         self.grad: np.ndarray | None = None
         self.creator = None
@@ -13,6 +23,9 @@ class Variable:
         self.creator = func
 
     def backward(self):
+        if self.grad is None:
+            self.grad = np.ones_like(self.data)
+
         funcs = [self.creator]
         while funcs:
             f = funcs.pop()
@@ -27,7 +40,7 @@ class Function:
     def __call__(self, input: Variable):
         x = input.data
         y = self.forward(x)
-        output = Variable(y)
+        output = Variable(as_array(y))
         output.set_creator(self)
         self.input = input
         self.output = output
@@ -60,30 +73,17 @@ class Exp(Function):
         return gx
 
 
+def square(x):
+    return Square()(x)
+
+
+def exp(x):
+    return Exp()(x)
+
+
 if __name__ == "__main__":
-    A = Square()
-    B = Exp()
-    C = Square()
-
     x = Variable(np.array(0.5))
-    a = A(x)
-    b = B(a)
-    y = C(b)
+    y = square(exp(square(x)))
 
-    y.grad = np.array(1.0)
     y.backward()
     print(x.grad)
-'''
-    C = y.creator
-    b = C.input
-    b.grad = C.backward(y.grad)
-
-    B = b.creator
-    a = B.input
-    a.grad = B.backward(b.grad)
-
-    A = a.creator
-    x = A.input
-    x.grad = A.backward(a.grad)
-    print(x.grad)
-'''
