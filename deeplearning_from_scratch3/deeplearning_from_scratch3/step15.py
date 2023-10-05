@@ -18,18 +18,31 @@ class Variable:
         self.data = data
         self.grad: np.ndarray | None = None
         self.creator = None
+        self.generation = 0
 
     def cleargrad(self):
         self.grad = None
 
     def set_creator(self, func: Function):
         self.creator = func
+        self.generation = func.generation + 1
 
     def backward(self):
         if self.grad is None:
             self.grad = np.ones_like(self.data)
 
-        funcs = [self.creator]
+        # 오리지널 버전 (heap 정렬 이용 x)
+        funcs: list[Function] = []
+        seen_set: set[Function] = set()
+
+        def add_func(f: Function):
+            if f not in seen_set:
+                funcs.append(f)
+                seen_set.add(f)
+                funcs.sort(key=lambda x: x.generation)
+
+        add_func(self.creator)
+
         while funcs:
             f = funcs.pop()
             gys = [output.grad for output in f.outputs]
@@ -44,7 +57,7 @@ class Variable:
                     x.grad = x.grad+gx
 
                 if x.creator is not None:
-                    funcs.append(x.creator)
+                    add_func(x.creator)
 
 
 class Function:
@@ -55,6 +68,7 @@ class Function:
             ys = (ys,)
         outputs = [Variable(as_array(y)) for y in ys]
 
+        self.generation = max([x.generation for x in inputs])
         for output in outputs:
             output.set_creator(self)
         self.inputs = inputs
@@ -97,12 +111,10 @@ def square(x):
 
 
 if __name__ == "__main__":
-    x = Variable(np.array(3))
-    y = add(x, x)
+    x = Variable(np.array(2))
+    a = square(x)
+    y = add(square(a), square(a))
     y.backward()
-    print(x.grad)
 
-    x.cleargrad()
-    y = add(add(x, x), x)
-    y.backward()
+    print(y.data)
     print(x.grad)

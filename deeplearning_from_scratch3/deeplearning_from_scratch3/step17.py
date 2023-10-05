@@ -1,4 +1,7 @@
 from __future__ import annotations
+from heapq import heappop, heappush
+
+import weakref
 import numpy as np
 
 
@@ -18,21 +21,33 @@ class Variable:
         self.data = data
         self.grad: np.ndarray | None = None
         self.creator = None
+        self.generation = 0
 
     def cleargrad(self):
         self.grad = None
 
     def set_creator(self, func: Function):
         self.creator = func
+        self.generation = func.generation + 1
 
     def backward(self):
         if self.grad is None:
             self.grad = np.ones_like(self.data)
 
-        funcs = [self.creator]
-        while funcs:
-            f = funcs.pop()
-            gys = [output.grad for output in f.outputs]
+        # heap 버전
+        funcs_heap: list[Function] = []
+        seen_set: set[Function] = set()
+
+        def add_func(f: Function):
+            if f not in seen_set:
+                heappush(funcs_heap, (-f.generation, f))
+                seen_set.add(f)
+
+        add_func(self.creator)
+
+        while funcs_heap:
+            f = heappop(funcs_heap)
+            gys = [output().grad for output in f.outputs]
             gxs = f.backward(*gys)
             if not isinstance(gxs, tuple):
                 gxs = (gxs,)
@@ -44,7 +59,7 @@ class Variable:
                     x.grad = x.grad+gx
 
                 if x.creator is not None:
-                    funcs.append(x.creator)
+                    add_func(x.creator)
 
 
 class Function:
@@ -55,11 +70,15 @@ class Function:
             ys = (ys,)
         outputs = [Variable(as_array(y)) for y in ys]
 
+        self.generation = max([x.generation for x in inputs])
         for output in outputs:
             output.set_creator(self)
         self.inputs = inputs
-        self.outputs = outputs
+        self.outputs = [weakref.ref(output) for output in outputs]
         return outputs if len(outputs) > 1 else outputs[0]
+
+    def __lt__(self, other: Function):
+        self.generation < other.generation
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
@@ -97,12 +116,6 @@ def square(x):
 
 
 if __name__ == "__main__":
-    x = Variable(np.array(3))
-    y = add(x, x)
-    y.backward()
-    print(x.grad)
-
-    x.cleargrad()
-    y = add(add(x, x), x)
-    y.backward()
-    print(x.grad)
+    for i in range(10):
+        x = Variable(np.random.randn(10000))
+        y = square(square(square(x)))
