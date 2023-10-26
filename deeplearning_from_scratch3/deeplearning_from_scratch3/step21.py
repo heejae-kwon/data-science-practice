@@ -14,6 +14,12 @@ def as_array(x):
     return x
 
 
+def as_variable(obj):
+    if isinstance(obj, Variable):
+        return obj
+    return Variable(obj)
+
+
 @dataclass
 class Config:
     enable_backprop = True
@@ -34,6 +40,8 @@ def no_grad():
 
 
 class Variable:
+    __array_priority__ = 200
+
     def __init__(self, data: np.ndarray, name=None):
         if data is not None:
             if not isinstance(data, np.ndarray):
@@ -53,12 +61,6 @@ class Variable:
             return 'variable(None)'
         p = str(self.data).replace('\n', '\n'+' '*9)
         return f"variable({p})"
-
-    def __mul__(self, other: Variable):
-        return mul(self, other)
-
-    def __add__(self, other: Variable):
-        return add(self, other)
 
     @property
     def shape(self):
@@ -121,6 +123,7 @@ class Variable:
 
 class Function:
     def __call__(self, *inputs: Variable):
+        inputs = [as_variable(x) for x in inputs]
         xs = [x.data for x in inputs]
         ys = self.forward(*xs)
         if not isinstance(ys, tuple):
@@ -156,6 +159,7 @@ class Add(Function):
 
 
 def add(x0, x1):
+    x1 = as_array(x1)
     return Add()(x0, x1)
 
 
@@ -170,6 +174,7 @@ class Mul(Function):
 
 
 def mul(x0, x1):
+    x1 = as_array(x1)
     return Mul()(x0, x1)
 
 
@@ -188,6 +193,12 @@ def square(x):
     return Square()(x)
 
 
+Variable.__add__ = add
+Variable.__radd__ = add
+Variable.__mul__ = mul
+Variable.__rmul__ = mul
+
+
 if __name__ == "__main__":
     a = Variable(np.array(3.0))
     b = Variable(np.array(2.0))
@@ -195,4 +206,15 @@ if __name__ == "__main__":
 
     y: Variable = (a*b)+c
     y.backward()
+
+    x = Variable(np.array(2.0))
+    y = x + np.array(3.0)
+    print(y)
+
+    x = Variable(np.array(2.0))
+    y = 3.0 * x + 1.0
+    print(y)
+
+    x = Variable(np.array([1.0]))
+    y = np.array([2.0]) + x
     print(y)
